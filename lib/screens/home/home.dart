@@ -6,11 +6,13 @@ import 'package:flutter_web_dashboard/components/status_card.dart';
 import 'package:flutter_web_dashboard/components/top_bar.dart';
 import 'package:flutter_web_dashboard/components/top_title.dart';
 import 'package:flutter_web_dashboard/models/graph.dart';
+import 'package:flutter_web_dashboard/screens/home/selection_callback_state.dart';
 import 'package:flutter_web_dashboard/screens/sensor_stats/args.dart';
 import 'package:flutter_web_dashboard/screens/centered_view/centered_view.dart';
 import 'package:flutter_web_dashboard/screens/home/nodes_list.dart';
 import 'package:flutter_web_dashboard/screens/home/status_graph.dart';
 import 'package:flutter_web_dashboard/screens/navigation_bar/navigation_bar.dart';
+import 'package:flutter_web_dashboard/utilities/measure.dart';
 import 'package:flutter_web_dashboard/screens/sensor_stats/sensor_stats.dart';
 import 'package:flutter_web_dashboard/utilities/constants.dart';
 import 'package:flutter_web_scrollbar/flutter_web_scrollbar.dart';
@@ -39,13 +41,44 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<List<AlbumArray>> fetchTwoAlbumArray(
+      String url, String param1, String param2) async {
+    final response1 = await http.get(Uri.http(url, param1));
+    final response2 = await http.get(Uri.http(url, param2));
+
+    if (response1.statusCode == 200 && response2.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return [
+        AlbumArray.fromJson(jsonDecode(response1.body)),
+        AlbumArray.fromJson(jsonDecode(response2.body)),
+      ];
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
+  }
+
   Future<Album> futureAlbum1;
   Future<Album> futureAlbum2;
+  // Future<AlbumArray> futureAlbumArray1;
+  // Future<AlbumArray> futureAlbumArray2;
+  Future<List<AlbumArray>> futureAlbumArray;
 
   @override
   Widget build(BuildContext context) {
     futureAlbum1 = fetchAlbum('0.0.0.0:5000', 'get_one_value_each/1');
     futureAlbum2 = fetchAlbum('0.0.0.0:5000', 'get_one_value_each/2');
+    // futureAlbumArray1 =
+    //     fetchAlbumArray('0.0.0.0:5000', 'get_array_values/temp/1');
+    // futureAlbumArray2 =
+    //     fetchAlbumArray('0.0.0.0:5000', 'get_array_values/temp/2');
+    futureAlbumArray = fetchTwoAlbumArray(
+      '0.0.0.0:5000',
+      'get_array_values/temp/1',
+      'get_array_values/temp/2',
+    );
 
     return Scaffold(
       body: Center(
@@ -64,6 +97,44 @@ class _HomeState extends State<Home> {
                       child: ListView(
                         //mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          FutureBuilder<List<AlbumArray>>(
+                            future: futureAlbumArray,
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return Container(
+                                  width: 600,
+                                  height: 300,
+                                  padding: EdgeInsets.all(8.0),
+                                  child: SelectionCallbackExample(
+                                    seriesList: getTwoMeasureData([
+                                      for (int i = 0;
+                                          i <
+                                              snapshot
+                                                  .data[0].numSamples.length;
+                                          i++)
+                                        Measure(snapshot.data[0].numSamples[i],
+                                            snapshot.data[0].temps[i])
+                                    ], [
+                                      for (int i = 0;
+                                          i <
+                                              snapshot
+                                                  .data[1].numSamples.length;
+                                          i++)
+                                        Measure(snapshot.data[1].numSamples[i],
+                                            snapshot.data[1].temps[i])
+                                    ]),
+                                    animate: false,
+                                    leftTitle: 'Temperatura (ºC)',
+                                    bottomTitle: 'Número da Medida',
+                                  ),
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text("${snapshot.error}");
+                              }
+                              // By default, show a loading spinner.
+                              return CircularProgressIndicator();
+                            },
+                          ),
                           Container(
                             // height: 50.0,
                             // width: 100.0,

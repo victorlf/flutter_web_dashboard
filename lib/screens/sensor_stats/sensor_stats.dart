@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_dashboard/components/battery.dart';
 import 'package:flutter_web_dashboard/components/top_bar.dart';
 import 'package:flutter_web_dashboard/screens/sensor_stats/args.dart';
-import 'package:flutter_web_dashboard/screens/sensor_stats/measure.dart';
+import 'package:flutter_web_dashboard/utilities/measure.dart';
 import 'package:flutter_web_dashboard/screens/sensor_stats/selection_callback_state.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../centered_view/centered_view.dart';
@@ -158,7 +158,7 @@ class _SensorStatsState extends State<SensorStats> {
                                 //     //     horizontal: 70.0, vertical: 10.0),
                                 //   ),
                                 // ),
-                                TopBar('Sensor 1'),
+                                TopBar('Sensor ${args.sensor}'),
                                 // Container(
                                 //   width: 100.0,
                                 // ),
